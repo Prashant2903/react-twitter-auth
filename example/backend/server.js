@@ -52,12 +52,12 @@ var createToken = function(auth) {
   });
 };
 
-var generateToken = function (req, res, next) {
+var generateToken = function(req, res, next) {
   req.token = createToken(req.auth);
   return next();
 };
 
-var sendToken = function (req, res) {
+var sendToken = function(req, res) {
   res.setHeader('x-auth-token', req.token);
   return res.status(200).send(JSON.stringify(req.user));
 };
@@ -67,13 +67,15 @@ router.route('/auth/twitter/reverse')
     request.post({
       url: 'https://api.twitter.com/oauth/request_token',
       oauth: {
-        oauth_callback: "http%3A%2F%2Flocalhost%3A3000%2Ftwitter-callback",
+        callback: "http%3A%2F%2Flocalhost%3A3000%2Ftwitter-callback",
         consumer_key: twitterConfig.consumerKey,
         consumer_secret: twitterConfig.consumerSecret
       }
-    }, function (err, r, body) {
+    }, function(err, r, body) {
       if (err) {
-        return res.send(500, { message: err.message });
+        return res.send(500, {
+          message: err.message
+        });
       }
 
 
@@ -91,10 +93,14 @@ router.route('/auth/twitter')
         consumer_secret: twitterConfig.consumerSecret,
         token: req.query.oauth_token
       },
-      form: { oauth_verifier: req.query.oauth_verifier }
-    }, function (err, r, body) {
+      form: {
+        oauth_verifier: req.query.oauth_verifier
+      }
+    }, function(err, r, body) {
       if (err) {
-        return res.send(500, { message: err.message });
+        return res.send(500, {
+          message: err.message
+        });
       }
 
       const bodyString = '{ "' + body.replace(/&/g, '", "').replace(/=/g, '": "') + '"}';
@@ -106,18 +112,20 @@ router.route('/auth/twitter')
 
       next();
     });
-  }, passport.authenticate('twitter-token', {session: false}), function(req, res, next) {
-      if (!req.user) {
-        return res.send(401, 'User Not Authenticated');
-      }
+  }, passport.authenticate('twitter-token', {
+    session: false
+  }), function(req, res, next) {
+    if (!req.user) {
+      return res.send(401, 'User Not Authenticated');
+    }
 
-      // prepare token for API
-      req.auth = {
-        id: req.user.id
-      };
+    // prepare token for API
+    req.auth = {
+      id: req.user.id
+    };
 
-      return next();
-    }, generateToken, sendToken);
+    return next();
+  }, generateToken, sendToken);
 
 //token handling middleware
 var authenticate = expressJwt({
@@ -142,7 +150,7 @@ var getCurrentUser = function(req, res, next) {
   });
 };
 
-var getOne = function (req, res) {
+var getOne = function(req, res) {
   var user = req.user.toObject();
 
   delete user['twitterProvider'];
